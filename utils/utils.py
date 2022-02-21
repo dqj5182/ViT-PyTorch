@@ -5,6 +5,18 @@ import torchvision.transforms as transforms
 
 from utils.autoaugment import CIFAR10Policy
 from utils.dataaug import RandomCropPaste
+
+from model.HCGNet.hcgnet import HCGNet_A1, HCGNet_A2, HCGNet_A3
+from model.densenet.densenet import densenet_cifar
+from model.dla.dla import DLA
+from model.dpn.dpn import DPN26, DPN92
+from model.efficientnet.efficientnet import EfficientNetB0
+from model.efficientnetv2.efficientnetv2 import effnetv2_s, effnetv2_m, effnetv2_l, effnetv2_xl
+from model.mobilenetv3.mobilenetv3 import MobileNetV3_Small, MobileNetV3_Large
+from model.pyramidnet.pyramidnet import pyramidnet164, pyramidnet272
+from model.resnet.resnet import ResNet50
+from model.resnext.resnext import ResNeXt29_2x64d, ResNeXt29_4x64d, ResNeXt29_8x64d, ResNeXt29_32x4d
+from model.vgg.vgg import VGG
 from model.vit.vit import ViT
 
 
