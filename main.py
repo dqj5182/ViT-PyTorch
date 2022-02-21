@@ -100,6 +100,7 @@ optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 # Train the model
 for epoch in range(10):  # loop over the dataset multiple times
+    print("Epoch:", epoch)
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs; data is a list of [inputs, labels]
