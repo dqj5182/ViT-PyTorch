@@ -64,8 +64,9 @@ base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_e
 scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=5, after_scheduler=base_scheduler)
 
 
-for epoch in range(2):  # loop over the dataset multiple times
-
+for epoch in range(n_epochs):  # loop over the dataset multiple times
+    train_total = 0
+    train_correct = 0
     training_loss = 0.0
     for data in trainloader:
         # get the inputs; data is a list of [inputs, labels]
@@ -84,7 +85,15 @@ for epoch in range(2):  # loop over the dataset multiple times
         # print statistics
         training_loss += loss.item()
 
-    print(f'Epoch: {epoch + 1} | Training Loss: {training_loss / len(trainloader):.3f}')
+        # Training Accuracy
+        _, predicted = torch.max(outputs.data, 1)
+        train_total += labels.size(0)
+        train_correct += (predicted == labels).sum().item()
+
+    training_acc = 100 * train_correct / train_total
+    print(training_loss)
+
+    print(f'Epoch: {epoch + 1} | Training Accuracy: {training_acc:.2f} | Training Loss: {training_loss / len(trainloader):.3f}')
 
 print('Finished Training')
 
