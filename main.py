@@ -91,9 +91,27 @@ for epoch in range(n_epochs):  # loop over the dataset multiple times
         train_correct += (predicted == labels).sum().item()
 
     training_acc = 100 * train_correct / train_total
-    print(training_loss)
+    
+    val_loss = 0.0
+    val_total = 0
+    val_correct = 0
+    net.eval()
+    for data in testloader:
+        inputs, labels = data[0].to(device), data[1].to(device)
 
-    print(f'Epoch: {epoch + 1} | Training Accuracy: {training_acc:.2f} | Training Loss: {training_loss / len(trainloader):.3f}')
+        outputs = net(inputs)
+        loss = criterion(outputs, labels)
+
+        val_loss += loss.item()
+
+        # Validation Accuracy
+        _, predicted = torch.max(outputs.data, 1)
+        val_total += labels.size(0)
+        val_correct += (predicted == labels).sum().item()
+
+    val_acc = 100 * val_correct / val_total
+
+    print(f'Epoch: {epoch + 1} | Training Accuracy: {training_acc:.2f} | Training Loss: {training_loss / len(trainloader):.3f} | Validation Accuracy: {val_acc:.2f} | Validation Loss: {val_loss / len(testloader):.3f}')
 
 print('Finished Training')
 
