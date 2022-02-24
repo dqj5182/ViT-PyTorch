@@ -8,6 +8,8 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
 
+import warmup_scheduler
+
 from model.vit.vit import ViT
 from dataset.load_cifar import load_cifar
 from utils.utils import get_model, get_dataset, get_experiment_name, get_criterion
@@ -95,12 +97,15 @@ net = nn.DataParallel(ViT(in_c = 3,
 
 # Criterion & Optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+optimizer = optim.Adam(net.parameters(), lr=1e-3, betas=(0.9, 0.999), weight_decay=5e-5)
+base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n_epochs, eta_min=1e-5)
+scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=5, after_scheduler=base_scheduler)
 
 
 # Train the model
-for epoch in range(10):  # loop over the dataset multiple times
+for epoch in range(args.n_epochs):  # loop over the dataset multiple times
     print("Epoch:", epoch)
+    scheduler.step(epoch)
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs; data is a list of [inputs, labels]
