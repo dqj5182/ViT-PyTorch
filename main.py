@@ -68,19 +68,27 @@ if not args.gpus:
 if args.mlp_hidden != args.hidden*4:
     print(f"[INFO] In original paper, mlp_hidden(CURRENT:{args.mlp_hidden}) is set to: {args.hidden*4}(={args.hidden}*4)")
 
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+transform_train = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+])
+
+transform_test = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+])
 
 batch_size = 128
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform)
+                                        download=True, transform=transform_train)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                           shuffle=True, num_workers=2)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                       download=True, transform=transform)
+                                       download=True, transform=transform_test)
 testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                          shuffle=False, num_workers=2)
 
@@ -101,7 +109,7 @@ net = ViT(3,
           ).to(device)
 
 
-n_epochs = 30
+n_epochs = 300
 
 
 criterion = get_criterion(args)
@@ -143,18 +151,19 @@ for epoch in range(n_epochs):  # loop over the dataset multiple times
     val_total = 0
     val_correct = 0
     net.eval()
-    for data in testloader:
-        inputs, labels = data[0].to(device), data[1].to(device)
+    with torch.no_grad():
+        for data in testloader:
+            inputs, labels = data[0].to(device), data[1].to(device)
 
-        outputs = net(inputs)
-        loss = criterion(outputs, labels)
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
 
-        val_loss += loss.item()
+            val_loss += loss.item()
 
-        # Validation Accuracy
-        _, predicted = torch.max(outputs.data, 1)
-        val_total += labels.size(0)
-        val_correct += (predicted == labels).sum().item()
+            # Validation Accuracy
+            _, predicted = torch.max(outputs.data, 1)
+            val_total += labels.size(0)
+            val_correct += (predicted == labels).sum().item()
 
     val_acc = 100 * val_correct / val_total
 
