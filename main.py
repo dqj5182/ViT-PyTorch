@@ -11,8 +11,7 @@ import torch.optim as optim
 import warmup_scheduler
 
 from model.vit.vit import ViT
-from model.resnet.resnet import ResNet50
-from dataset.load_cifar import load_cifar
+from utils.autoaugment import CIFAR10Policy
 from utils.utils import get_model, get_dataset, get_experiment_name, get_criterion
 from utils.dataaug import CutMix, MixUp
 
@@ -69,8 +68,7 @@ if args.mlp_hidden != args.hidden*4:
     print(f"[INFO] In original paper, mlp_hidden(CURRENT:{args.mlp_hidden}) is set to: {args.hidden*4}(={args.hidden}*4)")
 
 transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
+    CIFAR10Policy(),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
@@ -92,9 +90,6 @@ testset = torchvision.datasets.CIFAR10(root='./data', train=False,
 testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                          shuffle=False, num_workers=2)
 
-classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
 
 net = ViT(3, 
           10, 
@@ -109,16 +104,15 @@ net = ViT(3,
           ).to(device)
 
 
-n_epochs = 300
-
+min_valid_loss = np.inf
 
 criterion = get_criterion(args)
 optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(args.beta1, args.beta2), weight_decay=args.weight_decay)
-base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs, eta_min=args.min_lr)
+base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.max_epochs, eta_min=args.min_lr)
 scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=args.warmup_epoch, after_scheduler=base_scheduler)
 
 
-for epoch in range(n_epochs):  # loop over the dataset multiple times
+for epoch in range(args.max_epochs):  # loop over the dataset multiple times
     train_total = 0
     train_correct = 0
     training_loss = 0.0
@@ -168,5 +162,11 @@ for epoch in range(n_epochs):  # loop over the dataset multiple times
     val_acc = 100 * val_correct / val_total
 
     print(f'Epoch: {epoch + 1} | Training Accuracy: {training_acc:.2f} | Training Loss: {training_loss / len(trainloader):.3f} | Validation Accuracy: {val_acc:.2f} | Validation Loss: {val_loss / len(testloader):.3f}')
+
+    if min_valid_loss > (val_loss / len(testloader)):
+        print(f'Validation Loss Decreased ({min_valid_loss:.3f}--->{val_loss / len(testloader):.3f}) Saving The Model')
+        min_valid_loss = val_loss / len(testloader)
+        # Saving State Dict
+        torch.save(net.state_dict(), 'vit_saved_model.pth')
 
 print('Finished Training')
