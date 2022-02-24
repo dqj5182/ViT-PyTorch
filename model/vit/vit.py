@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 
-# Vision Transformer Model
 class PatchEmbedding(nn.Module): # Done
     """
     img_size: 1d size of each image (32 for CIFAR-10)
@@ -108,7 +107,6 @@ class MultiHeadSelfAttention(nn.Module):
         x = self.proj_drop(x) # Last Linear Layer Dropout: (batch_size, n_patches+1, dim)
 
         return x
-        
 
 class ViT(nn.Module): # Done
     def __init__(self, in_c:int=3, num_classes:int=10, img_size:int=32, num_patch_1d:int=8, dropout:float=0., num_enc_layers:int=7, hidden_dim:int=384, mlp_hidden_dim:int=384*4, num_head:int=8, is_cls_token:bool=True):
