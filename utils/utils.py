@@ -115,7 +115,7 @@ def get_dataset(args):
         args.padding = 4
         args.mean, args.std = [0.4914, 0.4822, 0.4465], [0.2470, 0.2435, 0.2616]
         train_transform, test_transform = get_transform(args)
-        train_ds = torchvision.datasets.CIFAR10(root, train=True, transform=train_transform, download=True)
+        train_ds = torchvision.datasets.CIFAR10(root, train=True, transform=train_transform, download=False)
         test_ds = torchvision.datasets.CIFAR10(root, train=False, transform=test_transform, download=False)
     else:
         raise NotImplementedError(f"{args.dataset} is not implemented yet.")

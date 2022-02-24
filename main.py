@@ -114,6 +114,7 @@ for epoch in range(n_epochs):  # loop over the dataset multiple times
     train_total = 0
     train_correct = 0
     training_loss = 0.0
+    net.train()
     for data in trainloader:
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data[0].to(device), data[1].to(device)
