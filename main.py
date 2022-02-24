@@ -11,9 +11,15 @@ import torch.optim as optim
 import warmup_scheduler
 
 from model.vit.vit import ViT
+from model.resnet.resnet import ResNet50
 from dataset.load_cifar import load_cifar
 from utils.utils import get_model, get_dataset, get_experiment_name, get_criterion
 from utils.dataaug import CutMix, MixUp
+
+
+# Device: CUDA or CPU
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", default="c10", type=str, help="[c10, c100, svhn]")
@@ -66,48 +72,39 @@ if args.mlp_hidden != args.hidden*4:
     print(f"[INFO] In original paper, mlp_hidden(CURRENT:{args.mlp_hidden}) is set to: {args.hidden*4}(={args.hidden}*4)")
 
 
-# Device: CUDA or CPU
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
-        
-
-# Load CIFAR-10 dataset
 # Dataset and Dataloader
-trainset, testset = get_dataset(args)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
-testloader = torch.utils.data.DataLoader(testset, batch_size=args.eval_batch_size, num_workers=args.num_workers, pin_memory=True)
+train_ds, test_ds = get_dataset(args)
+trainloader = torch.utils.data.DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
+testloader = torch.utils.data.DataLoader(test_ds, batch_size=args.eval_batch_size, num_workers=args.num_workers, pin_memory=True)
 
-classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-           
 
-# Model
-net = nn.DataParallel(ViT(in_c = 3, 
-                        num_classes = 10, 
-                        img_size=32, 
-                        num_patch_1d=8, 
-                        dropout=0., 
-                        mlp_hidden_dim=384*4,
-                        num_enc_layers=7,
-                        hidden_dim=384,
-                        num_head=8,
-                        is_cls_token=True
+#net = nn.DataParallel(ResNet50().to(device))
+
+net = nn.DataParallel(ViT(
+                        3, 
+                        10, 
+                        32, 
+                        8, 
+                        0.0, 
+                        7,
+                        384,
+                        384,
+                        12,
+                        True
                         ).to(device))
-          
 
-# Criterion & Optimizer
+
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters(), lr=1e-3, betas=(0.9, 0.999), weight_decay=5e-5)
-base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.n_epochs, eta_min=1e-5)
-scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=5, after_scheduler=base_scheduler)
+optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(args.beta1, args.beta2), weight_decay=args.weight_decay)
+base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.max_epochs, eta_min=args.min_lr)
+scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=args.warmup_epoch, after_scheduler=base_scheduler)
 
-
-# Train the model
-for epoch in range(args.n_epochs):  # loop over the dataset multiple times
-    print("Epoch:", epoch)
-    scheduler.step(epoch)
-    running_loss = 0.0
-    for i, data in enumerate(trainloader, 0):
+for epoch in range(args.max_epochs):  # loop over the dataset multiple times
+    training_loss = 0.0
+    train_total = 0
+    train_correct = 0
+    net.train()
+    for data in trainloader:
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data[0].to(device), data[1].to(device)
 
@@ -119,49 +116,38 @@ for epoch in range(args.n_epochs):  # loop over the dataset multiple times
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
+        scheduler.step()
 
-        # print statistics
-        running_loss += loss.item()
-        if i % 2000 == 1999:    # print every 2000 mini-batches
-            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-            running_loss = 0.0
+        # Training Loss
+        training_loss += loss.item()
+
+        # Training Accuracy
+        _, predicted = torch.max(outputs.data, 1)
+        train_total += labels.size(0)
+        train_correct += (predicted == labels).sum().item()
+
+    training_acc = 100 * train_correct / train_total
+
+    val_loss = 0.0
+    val_total = 0
+    val_correct = 0
+    net.eval()
+    for data in testloader:
+        inputs, labels = data[0].to(device), data[1].to(device)
+
+        outputs = net(inputs)
+        loss = criterion(outputs, labels)
+
+        val_loss += loss.item()
+
+        # Validation Accuracy
+        _, predicted = torch.max(outputs.data, 1)
+        val_total += labels.size(0)
+        val_correct += (predicted == labels).sum().item()
+
+    val_acc = 100 * val_correct / val_total
+
+    print(f'Epoch: {epoch + 1} | Training Accuracy: {training_acc:.2f} | Training Loss: {training_loss / len(trainloader):.3f} | Validation Accuracy: {val_acc:.2f} | Validation Loss: {val_loss / len(testloader):.3f}')
+
 
 print('Finished Training')
-
-
-# Test the model
-correct = 0
-total = 0
-# since we're not training, we don't need to calculate the gradients for our outputs
-with torch.no_grad():
-    for data in testloader:
-        images, labels = data[0].to(device), data[1].to(device)
-        # calculate outputs by running images through the network
-        outputs = net(images)
-        # the class with the highest energy is what we choose as prediction
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-print(f'Accuracy of the network on the 10000 test images: {100 * correct // total} %')
-
-# prepare to count predictions for each class
-correct_pred = {classname: 0 for classname in classes}
-total_pred = {classname: 0 for classname in classes}
-
-# again no gradients needed
-with torch.no_grad():
-    for data in testloader:
-        images, labels = data[0].to(device), data[1].to(device)
-        outputs = net(images)
-        _, predictions = torch.max(outputs, 1)
-        # collect the correct predictions for each class
-        for label, prediction in zip(labels, predictions):
-            if label == prediction:
-                correct_pred[classes[label]] += 1
-            total_pred[classes[label]] += 1
-
-# print accuracy for each class
-for classname, correct_count in correct_pred.items():
-    accuracy = 100 * float(correct_count) / total_pred[classname]
-    print(f'Accuracy for class: {classname:5s} is {accuracy:.1f} %')
