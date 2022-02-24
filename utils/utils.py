@@ -78,7 +78,7 @@ def get_transform(args):
     train_transform = []
     test_transform = []
     train_transform += [
-        transforms.RandomCrop(size=args.size, padding=args.padding)
+        transforms.RandomCrop(size=32, padding=args.padding)
     ]
     train_transform += [transforms.RandomHorizontalFlip()]
     
@@ -116,7 +116,7 @@ def get_dataset(args):
         args.mean, args.std = [0.4914, 0.4822, 0.4465], [0.2470, 0.2435, 0.2616]
         train_transform, test_transform = get_transform(args)
         train_ds = torchvision.datasets.CIFAR10(root, train=True, transform=train_transform, download=True)
-        test_ds = torchvision.datasets.CIFAR10(root, train=False, transform=test_transform, download=True)
+        test_ds = torchvision.datasets.CIFAR10(root, train=False, transform=test_transform, download=False)
     else:
         raise NotImplementedError(f"{args.dataset} is not implemented yet.")
     

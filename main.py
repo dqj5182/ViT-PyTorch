@@ -16,11 +16,57 @@ from dataset.load_cifar import load_cifar
 from utils.utils import get_model, get_dataset, get_experiment_name, get_criterion
 from utils.dataaug import CutMix, MixUp
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--dataset", default="c10", type=str, help="[c10, c100, svhn]")
+parser.add_argument("--num-classes", default=10, type=int)
+parser.add_argument("--model-name", default="vit", help="[vit]", type=str)
+parser.add_argument("--patch", default=8, type=int)
+parser.add_argument("--batch-size", default=128, type=int)
+parser.add_argument("--eval-batch-size", default=1024, type=int)
+parser.add_argument("--lr", default=1e-3, type=float)
+parser.add_argument("--min-lr", default=1e-5, type=float)
+parser.add_argument("--beta1", default=0.9, type=float)
+parser.add_argument("--beta2", default=0.999, type=float)
+parser.add_argument("--off-benchmark", action="store_true")
+parser.add_argument("--max-epochs", default=350, type=int)
+parser.add_argument("--dry-run", action="store_true")
+parser.add_argument("--weight-decay", default=5e-5, type=float)
+parser.add_argument("--warmup-epoch", default=5, type=int)
+parser.add_argument("--precision", default=16, type=int)
+parser.add_argument("--autoaugment", action="store_true")
+parser.add_argument("--criterion", default="ce")
+parser.add_argument("--label-smoothing", action="store_true")
+parser.add_argument("--smoothing", default=0.1, type=float)
+parser.add_argument("--rcpaste", action="store_true")
+parser.add_argument("--cutmix", action="store_true")
+parser.add_argument("--mixup", action="store_true")
+parser.add_argument("--dropout", default=0.0, type=float)
+parser.add_argument("--head", default=8, type=int)
+parser.add_argument("--num-layers", default=7, type=int)
+parser.add_argument("--hidden", default=384, type=int)
+parser.add_argument("--mlp-hidden", default=384, type=int)
+parser.add_argument("--off-cls-token", action="store_true")
+parser.add_argument("--seed", default=42, type=int)
+parser.add_argument("--project-name", default="VisionTransformer")
+args = parser.parse_args()
 
 # Device: CUDA or CPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
+# Seed and GPU
+torch.manual_seed(args.seed)
+np.random.seed(args.seed)
+args.benchmark = True if not args.off_benchmark else False
+args.gpus = torch.cuda.device_count()
+args.num_workers = 4*args.gpus if args.gpus else 8
+args.is_cls_token = True if not args.off_cls_token else False
+if not args.gpus:
+    args.precision=32
+
+# For VIT (Error)
+if args.mlp_hidden != args.hidden*4:
+    print(f"[INFO] In original paper, mlp_hidden(CURRENT:{args.mlp_hidden}) is set to: {args.hidden*4}(={args.hidden}*4)")
 
 transform = transforms.Compose(
     [transforms.ToTensor(),
@@ -58,10 +104,10 @@ net = ViT(3,
 n_epochs = 30
 
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters(), lr=1e-3, betas=(0.9, 0.999), weight_decay=5e-5)
-base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs, eta_min=1e-5)
-scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=5, after_scheduler=base_scheduler)
+criterion = get_criterion(args)
+optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(args.beta1, args.beta2), weight_decay=args.weight_decay)
+base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs, eta_min=args.min_lr)
+scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=args.warmup_epoch, after_scheduler=base_scheduler)
 
 
 for epoch in range(n_epochs):  # loop over the dataset multiple times
