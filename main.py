@@ -66,8 +66,8 @@ scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., to
 
 for epoch in range(2):  # loop over the dataset multiple times
 
-    running_loss = 0.0
-    for i, data in enumerate(trainloader, 0):
+    training_loss = 0.0
+    for data in trainloader:
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data[0].to(device), data[1].to(device)
 
@@ -82,10 +82,9 @@ for epoch in range(2):  # loop over the dataset multiple times
         scheduler.step()
 
         # print statistics
-        running_loss += loss.item()
-        if i % 100 == 99:    # print every 2000 mini-batches
-            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 100:.3f}')
-            running_loss = 0.0
+        training_loss += loss.item()
+
+    print(f'Epoch: {epoch + 1} | Training Loss: {training_loss / len(trainloader):.3f}')
 
 print('Finished Training')
 
