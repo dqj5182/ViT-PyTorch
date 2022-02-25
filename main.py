@@ -14,6 +14,7 @@ from model.vit.vit import ViT
 from utils.autoaugment import CIFAR10Policy
 from utils.utils import get_model, get_dataset, get_experiment_name, get_criterion
 from utils.dataaug import CutMix, MixUp
+from utils.dataaug import RandomCropPaste
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", default="c10", type=str, help="[c10, c100, svhn]")
@@ -27,7 +28,7 @@ parser.add_argument("--min-lr", default=1e-5, type=float)
 parser.add_argument("--beta1", default=0.9, type=float)
 parser.add_argument("--beta2", default=0.999, type=float)
 parser.add_argument("--off-benchmark", action="store_true")
-parser.add_argument("--max-epochs", default=350, type=int)
+parser.add_argument("--max-epochs", default=700, type=int)
 parser.add_argument("--dry-run", action="store_true")
 parser.add_argument("--weight-decay", default=5e-5, type=float)
 parser.add_argument("--warmup-epoch", default=5, type=int)
@@ -68,9 +69,12 @@ if args.mlp_hidden != args.hidden*4:
     print(f"[INFO] In original paper, mlp_hidden(CURRENT:{args.mlp_hidden}) is set to: {args.hidden*4}(={args.hidden}*4)")
 
 transform_train = transforms.Compose([
+    transforms.RandomCrop(size=32, padding=4),
+    transforms.RandomHorizontalFlip(),
     CIFAR10Policy(),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    RandomCropPaste(size=32)
 ])
 
 transform_test = transforms.Compose([
