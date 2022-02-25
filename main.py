@@ -28,7 +28,7 @@ parser.add_argument("--min-lr", default=1e-5, type=float)
 parser.add_argument("--beta1", default=0.9, type=float)
 parser.add_argument("--beta2", default=0.999, type=float)
 parser.add_argument("--off-benchmark", action="store_true")
-parser.add_argument("--max-epochs", default=700, type=int)
+parser.add_argument("--max-epochs", default=1500, type=int)
 parser.add_argument("--dry-run", action="store_true")
 parser.add_argument("--weight-decay", default=5e-5, type=float)
 parser.add_argument("--warmup-epoch", default=5, type=int)
@@ -86,13 +86,13 @@ batch_size = 128
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-                                          shuffle=True, num_workers=2)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
+                                          shuffle=True, num_workers=args.num_workers, pin_memory=True)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform_test)
-testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                         shuffle=False, num_workers=2)
+testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
+                                         shuffle=False, num_workers=args.num_workers, pin_memory=True)
 
 
 net = ViT(3, 
@@ -115,6 +115,11 @@ optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(args.beta1, args.bet
 base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.max_epochs, eta_min=args.min_lr)
 scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=args.warmup_epoch, after_scheduler=base_scheduler)
 
+if args.cutmix:
+    cutmix = CutMix(32, beta=1.)
+if args.mixup:
+    mixup = MixUp(alpha=1.)
+
 
 for epoch in range(args.max_epochs):  # loop over the dataset multiple times
     train_total = 0
@@ -128,9 +133,21 @@ for epoch in range(args.max_epochs):  # loop over the dataset multiple times
         # zero the parameter gradients
         optimizer.zero_grad()
 
-        # forward + backward + optimize
-        outputs = net(inputs)
-        loss = criterion(outputs, labels)
+        if args.cutmix or args.mixup:
+            if args.cutmix:
+                img, label, rand_label, lambda_= cutmix((inputs, labels))
+            elif args.mixup:
+                if np.random.rand() <= 0.8:
+                    img, label, rand_label, lambda_ = mixup((inputs, labels))
+                else:
+                    img, label, rand_label, lambda_ = inputs, labels, torch.zeros_like(labels), 1.
+            outputs = net(inputs)
+            loss = criterion(outputs, label)*lambda_ + criterion(outputs, rand_label)*(1.-lambda_)
+        else:
+            # forward + backward + optimize
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
+
         loss.backward()
         optimizer.step()
         scheduler.step()
