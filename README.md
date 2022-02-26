@@ -23,7 +23,7 @@ Folder Structure
 │   ├── dataaug.py
 │   └── utils.py
 ├── main.py
-└── setup.sh           
+└── vit_saved_model.pth          
 ```
 
 Before starting (Install packages):
