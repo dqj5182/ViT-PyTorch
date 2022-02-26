@@ -67,8 +67,10 @@ min_valid_loss = np.inf
 if args.mlp_hidden != args.hidden*4:
     print(f"[INFO] In original paper, mlp_hidden(CURRENT:{args.mlp_hidden}) is set to: {args.hidden*4}(={args.hidden}*4)")
 
+
 # Load CIFAR-10 data
 trainset, testset, trainloader, testloader = load_cifar(args)
+
 
 # Vision Transformer model
 net = ViT(3, 
@@ -83,13 +85,16 @@ net = ViT(3,
           True
           ).to(device)
 
+
 #Criterion
 criterion = get_criterion(args)
+
 
 # Optimizer
 optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(args.beta1, args.beta2), weight_decay=args.weight_decay)
 base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.max_epochs, eta_min=args.min_lr)
 scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=args.warmup_epoch, after_scheduler=base_scheduler)
+
 
 # Cutmix and Mixup (optional)
 if args.cutmix:
@@ -97,8 +102,10 @@ if args.cutmix:
 if args.mixup:
     mixup = MixUp(alpha=1.)
 
+
 # Training and Validation loop
 for epoch in range(args.max_epochs):  # loop over the dataset multiple times
+    # Training Loop
     train_total = 0
     train_correct = 0
     training_loss = 0.0
@@ -139,6 +146,7 @@ for epoch in range(args.max_epochs):  # loop over the dataset multiple times
 
     training_acc = 100 * train_correct / train_total
     
+    # Validation Loop
     val_loss = 0.0
     val_total = 0
     val_correct = 0
@@ -161,6 +169,7 @@ for epoch in range(args.max_epochs):  # loop over the dataset multiple times
 
     print(f'Epoch: {epoch + 1} | Training Accuracy: {training_acc:.2f} | Training Loss: {training_loss / len(trainloader):.3f} | Validation Accuracy: {val_acc:.2f} | Validation Loss: {val_loss / len(testloader):.3f}')
 
+    # Capture the best model through training
     if min_valid_loss > (val_loss / len(testloader)):
         print(f'Validation Loss Decreased ({min_valid_loss:.3f}--->{val_loss / len(testloader):.3f}) Saving The Model')
         min_valid_loss = val_loss / len(testloader)
