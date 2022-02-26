@@ -26,10 +26,6 @@ Folder Structure
 └── vit_saved_model.pth          
 ```
 
-Before starting (Install packages):
-```
-bash setup.sh
-```
 </br>
 
 [General Option] Train the any model with CIFAR-10 dataset:
@@ -54,10 +50,10 @@ CUDA_VISIBLE_DEVICES=0 means that we are assigning GPU0 to be our CUDA device
 </br>
 
 ## Pretrained Models
-Epoch: 200 (CNN based), Epoch: 350 (VIT)
+Epoch: 200 (CNN based), Epoch: 1500 (VIT)
 Model | Pretrained (.pth) | Notebook | Paper | Accuracy
 --- | --- | --- | --- | ---
-Vision Transformer | [Google Drive](https://drive.google.com/file/d/1BWGIBBI32Ou25GugkdpRyNwzT7Grz0HH/view?usp=sharing) | [Google Colab](https://colab.research.google.com/drive/1vzxacSe-m5B709gvPl-DPDpxhMiqxI3U?usp=sharing) | [Arxiv](https://arxiv.org/pdf/2010.11929.pdf) | 90.10%
+Vision Transformer | [Google Drive](https://drive.google.com/file/d/1EsMUTy-IwISqsbFDyn_6pG4XExA6mE2P/view?usp=sharing) | [Google Colab](https://colab.research.google.com/drive/1vPFNCh2xMp7fgckaY9fGt0zkdPCq3rLO?usp=sharing) | [Arxiv](https://arxiv.org/pdf/2010.11929.pdf) | 90.61%
 ResNet-50 | [Google Drive](https://drive.google.com/file/d/1FNsXhHEpEKiZQFgk8vBppmGIABEYXb88/view?usp=sharing) | [Google Colab](https://colab.research.google.com/drive/1NSBEJSnQ4wgt6_bvPPKlbyxASZcZgfH6?usp=sharing) | [Arxiv](https://arxiv.org/pdf/1512.03385.pdf) | 95.36%
 ResNeXT | [Google Drive](https://drive.google.com/file/d/1LBn_AVSaQv1O0LaGN8JUWwwyFQ5_mIwl/view?usp=sharing) | [Google Colab](https://colab.research.google.com/drive/1yTg8EmAi2yVpKBthnh-S47sG6dPEoQxD?usp=sharing) | [Arxiv](https://arxiv.org/pdf/1611.05431.pdf) | 94.91%
 HCGNet | [Google Drive](https://drive.google.com/file/d/1jNDtVZTB9DAWB9ZzaVUbF-sE2-LsMq1O/view?usp=sharing) | [Google Colab](https://colab.research.google.com/drive/10Ey9Dc2Va3b2O-L15a27AqOXj7cYtMtm?usp=sharing) | [Arxiv](https://arxiv.org/pdf/1908.09699.pdf) | 94.76%
