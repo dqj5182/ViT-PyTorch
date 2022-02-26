@@ -1,4 +1,4 @@
-# VIT_CNN_CIFAR_10
+# VIT_CNN_CIFAR_10_FROM_SCRATCH
 
 Folder Structure
 ```bash
