@@ -13,6 +13,7 @@ from dataset.load_cifar import load_cifar
 from utils.utils import get_criterion
 from utils.dataaug import CutMix, MixUp
 
+# Parser
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", default="c10", type=str, help="[c10, c100, svhn]")
 parser.add_argument("--num-classes", default=10, type=int)
@@ -61,6 +62,7 @@ args.is_cls_token = True if not args.off_cls_token else False
 if not args.gpus:
     args.precision=32
 
+# Will be used in validation loop (save best model that gives lowest validation loss)
 min_valid_loss = np.inf
 
 # For VIT (Error)
