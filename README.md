@@ -63,6 +63,9 @@ VGG-11 | [Google Drive](https://drive.google.com/file/d/1h4C4WQHqVhGOHKyCkk41unA
 </br>
 </br>
 
+## From Scratch VS PyTorch Lightning
+Please visit [my another GitHub repo](https://github.com/dqj5182/VIT_CNN_CIFAR_10_PyTorch_Lightning) for PyTorch Lightning version of this code. They work pretty much same but in different format.
+
 ## Reference
 Many of the codes for VIT models, training, and testing are from [ViT-CIFAR repo](https://github.com/omihub777/ViT-CIFAR) by [omihub777](https://github.com/omihub777)</br>
 Some of the codes for VIT models are from [vision_transformer repo](https://github.com/google-research/vision_transformer) by [google-research](https://github.com/google-research)</br>
