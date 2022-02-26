@@ -60,7 +60,7 @@ HCGNet | [Google Drive](https://drive.google.com/file/d/1jNDtVZTB9DAWB9ZzaVUbF-s
 DenseNet | [Google Drive](https://drive.google.com/file/d/1NVe2wwJLxL1XH1tbenrVU7iV5Tx3DuyL/view?usp=sharing) | [Google Colab](https://colab.research.google.com/drive/197uig6UEecpbLIswSKps4Fu4oaRN1yuS?usp=sharing) | [Arxiv](https://arxiv.org/pdf/1608.06993.pdf) | 94.59%
 VGG-19 | [Google Drive](https://drive.google.com/file/d/1kNcRFOpmotVaKER9ThTpYIdWQg_p8_Ab/view?usp=sharing) | [Google Colab](https://colab.research.google.com/drive/1bxbpmPQsnb1DzwQGz1m9QTacUDwBkGh7?usp=sharing) | [Arxiv](https://arxiv.org/pdf/1409.1556.pdf) | 94.37%
 VGG-11 | [Google Drive](https://drive.google.com/file/d/1h4C4WQHqVhGOHKyCkk41unA_A9Ao4R3h/view?usp=sharing) | [Google Colab](https://colab.research.google.com/drive/1DOPFU3J6_mxVDCvJLH9lBL1rbH84LGrD?usp=sharing) | [Arxiv](https://arxiv.org/pdf/1409.1556.pdf) | 92.72%
-</br>
+
 
 ## From Scratch VS PyTorch Lightning
 Please visit [my another GitHub repo](https://github.com/dqj5182/VIT_CNN_CIFAR_10_PyTorch_Lightning) for PyTorch Lightning version of this code. They work pretty much same but in different format.
