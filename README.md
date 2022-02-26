@@ -22,7 +22,6 @@ Folder Structure
 │   ├── autoaugment.py
 │   ├── dataaug.py
 │   └── utils.py
-├── weights
 ├── main.py
 └── setup.sh           
 ```
