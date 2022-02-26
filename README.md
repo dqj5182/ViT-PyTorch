@@ -17,7 +17,7 @@ Folder Structure
 │   ├── vgg
 │   └── vit
 ├── notebooks
-│   └── Pretrained ResNet (VIT Week).ipynb
+│   └── Pretrained_Vision_Transformer_w_o_PyTorch_Lightning.ipynb
 ├── utils
 │   ├── autoaugment.py
 │   ├── dataaug.py
