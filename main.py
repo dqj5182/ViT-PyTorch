@@ -4,17 +4,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision
-import torchvision.transforms as transforms
 import torch.optim as optim
 
 import warmup_scheduler
 
 from model.vit.vit import ViT
-from utils.autoaugment import CIFAR10Policy
-from utils.utils import get_model, get_dataset, get_experiment_name, get_criterion
+from dataset.load_cifar import load_cifar
+from utils.utils import get_criterion
 from utils.dataaug import CutMix, MixUp
-from utils.dataaug import RandomCropPaste
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", default="c10", type=str, help="[c10, c100, svhn]")
@@ -64,37 +61,16 @@ args.is_cls_token = True if not args.off_cls_token else False
 if not args.gpus:
     args.precision=32
 
+min_valid_loss = np.inf
+
 # For VIT (Error)
 if args.mlp_hidden != args.hidden*4:
     print(f"[INFO] In original paper, mlp_hidden(CURRENT:{args.mlp_hidden}) is set to: {args.hidden*4}(={args.hidden}*4)")
 
-transform_train = transforms.Compose([
-    transforms.RandomCrop(size=32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    CIFAR10Policy(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
-    RandomCropPaste(size=32)
-])
+# Load CIFAR-10 data
+trainset, testset, trainloader, testloader = load_cifar(args)
 
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
-])
-
-batch_size = 128
-
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-                                          shuffle=True, num_workers=args.num_workers, pin_memory=True)
-
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                       download=True, transform=transform_test)
-testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
-                                         shuffle=False, num_workers=args.num_workers, pin_memory=True)
-
-
+# Vision Transformer model
 net = ViT(3, 
           10, 
           32, 
@@ -107,20 +83,21 @@ net = ViT(3,
           True
           ).to(device)
 
-
-min_valid_loss = np.inf
-
+#Criterion
 criterion = get_criterion(args)
+
+# Optimizer
 optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(args.beta1, args.beta2), weight_decay=args.weight_decay)
 base_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.max_epochs, eta_min=args.min_lr)
 scheduler = warmup_scheduler.GradualWarmupScheduler(optimizer, multiplier=1., total_epoch=args.warmup_epoch, after_scheduler=base_scheduler)
 
+# Cutmix and Mixup (optional)
 if args.cutmix:
     cutmix = CutMix(32, beta=1.)
 if args.mixup:
     mixup = MixUp(alpha=1.)
 
-
+# Training and Validation loop
 for epoch in range(args.max_epochs):  # loop over the dataset multiple times
     train_total = 0
     train_correct = 0
