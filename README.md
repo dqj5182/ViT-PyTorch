@@ -63,7 +63,7 @@ VGG-11 | [Google Drive](https://drive.google.com/file/d/1h4C4WQHqVhGOHKyCkk41unA
 </br>
 
 ## From Scratch VS PyTorch Lightning
-Please visit [my another GitHub repo](https://github.com/dqj5182/VIT_CNN_CIFAR_10_PyTorch_Lightning) for PyTorch Lightning version of this code. They work pretty much same but in different format.
+Please visit [my another GitHub repo](https://github.com/dqj5182/VIT_CNN_CIFAR_10_PyTorch_Lightning) for PyTorch Lightning version of this code. They work pretty much the same but in different format.
 </br>
 
 ## Reference
