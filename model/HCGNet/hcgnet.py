@@ -155,7 +155,7 @@ class SGDRScheduler(nn.Module):
     def step(self):
         #self.dropblock.drop_prob = np.abs((0 + 0.5 * 0.1 * (1 + np.cos(np.pi * SGDRScheduler.global_epoch / SGDRScheduler.all_epoch)))-0.1)
         #SGDRScheduler.cur_drop_prob = self.dropblock.drop_prob
-        ix = np.log2(self.global_epoch / 10 + 1).astype(np.int)
+        ix = np.log2(self.global_epoch / 10 + 1).astype(int)
         T_cur = self.global_epoch - 10 * (2 ** (ix) - 1)
         T_i = (10 * 2 ** ix)
         self.dropblock.drop_prob = np.abs((0 + 0.5 * 0.1 * (1 + np.cos(np.pi * T_cur / T_i)))-0.1)
